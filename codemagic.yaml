@@ -1,0 +1,165 @@
+workflows:
+  ios-workflow:
+    name: Market Darwaza
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: codemagic
+
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ~/Library/Caches/CocoaPods
+
+    environment:
+      flutter: default
+      xcode: latest
+      cocoapods: default
+
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.benaapp.mdarwaza
+
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+
+      - name: Install CocoaPods dependencies
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+
+      - name: Verify code signing
+        script: |
+          echo "========================================"
+          echo "=== CODE SIGNING IDENTITIES ==="
+          echo "========================================"
+
+          security find-identity -v -p codesigning || true
+
+          echo ""
+          echo "========================================"
+          echo "=== PROVISIONING PROFILES ==="
+          echo "========================================"
+
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+
+          if [ -d "$PROFILE_DIR" ]; then
+            for f in "$PROFILE_DIR"/*.mobileprovision; do
+              [ -e "$f" ] || continue
+
+              echo ""
+              echo "---- PROFILE: $f ----"
+
+              security cms -D -i "$f" > /tmp/profile.plist
+
+              echo "Name:"
+              /usr/libexec/PlistBuddy \
+                -c "Print :Name" \
+                /tmp/profile.plist 2>/dev/null || true
+
+              echo "UUID:"
+              /usr/libexec/PlistBuddy \
+                -c "Print :UUID" \
+                /tmp/profile.plist 2>/dev/null || true
+
+              echo "Application Identifier:"
+              /usr/libexec/PlistBuddy \
+                -c "Print :Entitlements:application-identifier" \
+                /tmp/profile.plist 2>/dev/null || true
+
+              echo "Team Identifier:"
+              /usr/libexec/PlistBuddy \
+                -c "Print :Entitlements:com.apple.developer.team-identifier" \
+                /tmp/profile.plist 2>/dev/null || true
+
+              echo "Expiration:"
+              /usr/libexec/PlistBuddy \
+                -c "Print :ExpirationDate" \
+                /tmp/profile.plist 2>/dev/null || true
+            done
+          else
+            echo "Provisioning Profiles directory not found!"
+          fi
+
+          echo ""
+          echo "========================================"
+          echo "=== XCODE SIGNING SETTINGS ==="
+          echo "========================================"
+
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -showBuildSettings 2>/dev/null |
+            grep -E \
+            'PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE|PROVISIONING_PROFILE_SPECIFIER' \
+            || true
+
+      - name: Build Production IPA
+        script: |
+          cat > /tmp/ExportOptions.plist <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+
+              <key>signingStyle</key>
+              <string>manual</string>
+
+              <key>teamID</key>
+              <string>KGR3NR587L</string>
+
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.benaapp.mdarwaza</key>
+                  <string>Market Darwaza ios_app_store 6814253123</string>
+              </dict>
+
+              <key>stripSwiftSymbols</key>
+              <true/>
+
+              <key>uploadBitcode</key>
+              <false/>
+
+              <key>compileBitcode</key>
+              <false/>
+
+              <key>destination</key>
+              <string>export</string>
+          </dict>
+          </plist>
+          EOF
+
+          echo "========================================"
+          echo "=== EXPORT OPTIONS ==="
+          echo "========================================"
+
+          cat /tmp/ExportOptions.plist
+
+          echo ""
+          echo "========================================"
+          echo "=== BUILD PRODUCTION IPA ==="
+          echo "========================================"
+
+          flutter build ipa \
+            --release \
+            --export-options-plist=/tmp/ExportOptions.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
