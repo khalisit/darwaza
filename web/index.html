@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="market_darwaza">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>market_darwaza</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <style>
+    #splash{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);z-index:9999;font-family:'Segoe UI',Tahoma,sans-serif;transition:opacity .5s ease}
+    #splash.hide{opacity:0;pointer-events:none}
+    .splash-icon{width:90px;height:90px;border-radius:22px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:pulse 2s ease-in-out infinite}
+    .splash-icon img{width:54px;height:54px;border-radius:12px}
+    .splash-title{color:#fff;font-size:22px;font-weight:700;letter-spacing:.5px;margin-bottom:6px}
+    .splash-sub{color:rgba(255,255,255,.5);font-size:13px;margin-bottom:32px}
+    .progress-track{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;position:relative}
+    .progress-bar{height:100%;background:linear-gradient(90deg,#e94560,#ff6b6b);border-radius:4px;width:0%;transition:width .3s ease}
+    .splash-status{color:rgba(255,255,255,.4);font-size:11px;margin-top:14px;min-height:16px}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  </style>
+  <div id="splash">
+    <div class="splash-icon"><img src="icons/Icon-192.png" alt="logo"></div>
+    <div class="splash-title">مارکێت دەروازە</div>
+    <div class="splash-sub">سیستەمی بەڕێوەبردنی مارکێت</div>
+    <div class="progress-track"><div class="progress-bar" id="pbar"></div></div>
+    <div class="splash-status" id="pstatus"></div>
+  </div>
+  <script>
+    var pbar=document.getElementById('pbar'),pstatus=document.getElementById('pstatus');
+    var steps=[[10,'بارکردنی ئەپلیکەیشن...'],[30,'ئامادەکردنی گرافیک...'],[60,'بارکردنی داتا...'],[85,'نزیکە تەواو بێت...']];
+    var si=0;function tick(){if(si<steps.length){pbar.style.width=steps[si][0]+'%';pstatus.innerText=steps[si][1];si++;setTimeout(tick,si===1?500:2000)}};tick();
+    window.addEventListener('flutter-first-frame',function(){
+      pbar.style.width='100%';pstatus.innerText='تەواو بوو!';
+      setTimeout(function(){document.getElementById('splash').classList.add('hide');setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove()},600)},300);
+    });
+    window.onerror=function(m){pstatus.innerText='هەڵە: '+m.toString().substring(0,80)};
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
