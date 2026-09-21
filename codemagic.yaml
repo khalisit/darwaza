@@ -139,11 +139,16 @@ workflows:
           </plist>
           EOF
 
+          EXPORT_PLIST=/Users/builder/export_options.plist
+          if [ ! -f "$EXPORT_PLIST" ]; then
+            EXPORT_PLIST=/tmp/ExportOptions.plist
+          fi
+
           echo "========================================"
-          echo "=== EXPORT OPTIONS ==="
+          echo "=== EXPORT OPTIONS ($EXPORT_PLIST) ==="
           echo "========================================"
 
-          cat /tmp/ExportOptions.plist
+          cat "$EXPORT_PLIST"
 
           echo ""
           echo "========================================"
@@ -152,7 +157,7 @@ workflows:
 
           flutter build ipa \
             --release \
-            --export-options-plist=/tmp/ExportOptions.plist
+            --export-options-plist="$EXPORT_PLIST"
 
     artifacts:
       - build/ios/ipa/*.ipa
