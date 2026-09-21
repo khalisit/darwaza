@@ -1,4 +1,4 @@
-package com.karoxghafoor.market_darwaza
+package com.benaapp.mdarwaza
 
 import io.flutter.embedding.android.FlutterActivity
 
